@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Spooly verbinden",
+        "description": "Den Schlüssel legst du in Spooly an: Einstellungen, Geräte & Schlüssel. Die Integration liest nur und ändert nichts in Spooly.",
+        "sections": {
+          "advanced": {
+            "name": "Erweitert",
+            "description": "Nur ändern, wenn du gegen eine Testumgebung arbeitest.",
+            "data": {
+              "url": "Adresse der Schnittstelle"
+            }
+          }
+        },
+        "data": {
+          "api_key": "API-Schlüssel"
+        },
+        "data_description": {
+          "api_key": "Beginnt mit spk_"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Neuen Schlüssel eintragen",
+        "description": "Spooly hat den Schlüssel abgelehnt. Er wurde vermutlich widerrufen. Lege in Spooly einen neuen an und trage ihn hier ein.",
+        "data": {
+          "api_key": "API-Schlüssel"
+        },
+        "data_description": {
+          "api_key": "Beginnt mit spk_"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Der Schlüssel ist falsch oder wurde widerrufen.",
+      "pro_expired": "Spooly Pro ist abgelaufen. Mit aktivem Pro funktioniert der Schlüssel wieder.",
+      "api_disabled": "Die Schnittstelle ist für dein Konto noch nicht freigeschaltet.",
+      "rate_limited": "Du hast heute die erlaubte Zahl an Aufrufen erreicht. Versuche es später noch einmal.",
+      "cannot_connect": "Spooly ist nicht erreichbar. Prüfe die Internetverbindung.",
+      "invalid_url": "Die Adresse muss mit https:// beginnen.",
+      "unknown": "Spooly hat unerwartet geantwortet. Details stehen im Protokoll."
+    },
+    "abort": {
+      "already_configured": "Dieser Schlüssel ist schon eingerichtet.",
+      "reauth_successful": "Der neue Schlüssel ist gespeichert."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "remaining_weight": {
+        "name": "Restgewicht"
+      },
+      "slot": {
+        "name": "{slot}"
+      },
+      "calls_today": {
+        "name": "Aufrufe heute"
+      }
+    },
+    "binary_sensor": {
+      "low": {
+        "name": "Niedrig"
+      }
+    }
+  },
+  "exceptions": {
+    "pro_expired": {
+      "message": "Spooly Pro ist abgelaufen. Die Werte bleiben stehen und kommen wieder, sobald Pro aktiv ist."
+    },
+    "api_disabled": {
+      "message": "Die Schnittstelle ist für dein Spooly-Konto nicht freigeschaltet."
+    },
+    "rate_limited": {
+      "message": "Spooly hat die Abrufe vorübergehend begrenzt. Der nächste Versuch folgt später."
+    },
+    "cannot_connect": {
+      "message": "Spooly ist nicht erreichbar."
+    },
+    "api_error": {
+      "message": "Spooly hat unerwartet geantwortet: {error}"
+    }
+  }
+}

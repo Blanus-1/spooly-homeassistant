@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Spooly",
+        "description": "Create the key in Spooly under Settings, Devices & keys. The integration only reads and never changes anything in Spooly.",
+        "sections": {
+          "advanced": {
+            "name": "Advanced",
+            "description": "Only change this if you are working against a test environment.",
+            "data": {
+              "url": "API address"
+            }
+          }
+        },
+        "data": {
+          "api_key": "API key"
+        },
+        "data_description": {
+          "api_key": "Starts with spk_"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Enter a new key",
+        "description": "Spooly rejected the key. It was probably revoked. Create a new one in Spooly and enter it here.",
+        "data": {
+          "api_key": "API key"
+        },
+        "data_description": {
+          "api_key": "Starts with spk_"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "The key is wrong or has been revoked.",
+      "pro_expired": "Spooly Pro has expired. The key works again once Pro is active.",
+      "api_disabled": "The API is not enabled for your account yet.",
+      "rate_limited": "You have reached today's limit of calls. Try again later.",
+      "cannot_connect": "Spooly cannot be reached. Check the internet connection.",
+      "invalid_url": "The address must start with https://.",
+      "unknown": "Spooly answered unexpectedly. Details are in the log."
+    },
+    "abort": {
+      "already_configured": "This key is already set up.",
+      "reauth_successful": "The new key has been saved."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "remaining_weight": {
+        "name": "Remaining weight"
+      },
+      "slot": {
+        "name": "{slot}"
+      },
+      "calls_today": {
+        "name": "Calls today"
+      }
+    },
+    "binary_sensor": {
+      "low": {
+        "name": "Low"
+      }
+    }
+  },
+  "exceptions": {
+    "pro_expired": {
+      "message": "Spooly Pro has expired. Values stay as they are and return once Pro is active."
+    },
+    "api_disabled": {
+      "message": "The API is not enabled for your Spooly account."
+    },
+    "rate_limited": {
+      "message": "Spooly has limited requests for now. The next attempt follows later."
+    },
+    "cannot_connect": {
+      "message": "Spooly cannot be reached."
+    },
+    "api_error": {
+      "message": "Spooly answered unexpectedly: {error}"
+    }
+  }
+}
