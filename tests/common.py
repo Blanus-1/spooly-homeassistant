@@ -34,6 +34,42 @@ def make_spool(n: int, **extra: Any) -> dict[str, Any]:
     return spool
 
 
+def make_printer(printer_id: str = "prn-1", name: str | None = "Bambu X1C", **extra: Any) -> dict[str, Any]:
+    printer = {
+        "printer_id": printer_id,
+        "printer": name,
+        "hours": 120.5,
+        "prints": 40,
+        "filament_kg": 3.2,
+        "due_count": 1,
+        "soon_count": 1,
+        "health_score": 80,
+        "hours_confirmed": True,
+    }
+    printer.update(extra)
+    return printer
+
+
+def make_task(task_id: str = "task-1", printer_id: str = "prn-1", **extra: Any) -> dict[str, Any]:
+    task = {
+        "id": task_id,
+        "printer_id": printer_id,
+        "printer": "Bambu X1C",
+        "name": "Düse wechseln",
+        "status": "due",
+        "metric": "hours",
+        "interval": 200,
+        "used": 210.0,
+        "remaining": -10.0,
+        "eta_days": None,
+        "snoozed_until": None,
+        "last_done_at": "2026-09-01T10:00:00Z",
+        "default_action": "replace",
+    }
+    task.update(extra)
+    return task
+
+
 def make_slot(
     printer: str, slot: str, spool: dict[str, Any] | None = None, slot_id: str | None = None
 ) -> dict[str, Any]:
@@ -47,7 +83,7 @@ def make_slot(
 
 
 class FakeSpooly:
-    """Beantwortet /me, /spools, /slots und /locations aus dem Speicher und nimmt Änderungen an.
+    """Beantwortet /me, /spools, /slots, /locations, /maintenance und /statistics aus dem Speicher und nimmt Änderungen an.
 
     Fehler lassen sich einschalten: `fail` für alle Pfade, `fail_write` nur für ändernde Aufrufe.
     """
@@ -66,6 +102,18 @@ class FakeSpooly:
         self.spools: list[dict[str, Any]] = [make_spool(1)]
         self.archived: list[dict[str, Any]] = []
         self.slots: list[dict[str, Any]] = []
+        self.maint_printers: list[dict[str, Any]] = []
+        self.tasks: list[dict[str, Any]] = []
+        self.statistics: dict[str, Any] = {
+            "grams": 0,
+            "prints": 0,
+            "hours": 0,
+            "filament_cost": 0,
+            "currency": "EUR",
+            "stock": {"active_spools": 0, "remaining_grams": 0, "stock_value": 0, "total_spent": 0},
+        }
+        # Abfragen von /statistics: (Jahr, Monat)
+        self.statistics_queries: list[tuple[str, str]] = []
         self.locations: list[dict[str, Any]] = [
             {"id": "loc-1", "name": "Schrank 01 · Fach vorne", "is_default": False},
             {"id": "loc-2", "name": "Regal 1", "is_default": True},
@@ -121,6 +169,18 @@ class FakeSpooly:
             body = self.me
         elif path == "/slots":
             body = {"items": self.slots}
+        elif path == "/maintenance":
+            body = {
+                "printers": self.maint_printers,
+                "tasks": self.tasks,
+                "printers_without_plan": [],
+                "due_count": sum(t["status"] == "due" for t in self.tasks),
+                "soon_count": sum(t["status"] == "soon" for t in self.tasks),
+                "snoozed_count": 0,
+            }
+        elif path == "/statistics":
+            self.statistics_queries.append((url.query["year"], url.query["month"]))
+            body = self.statistics
         elif path == "/locations":
             body = {"items": self.locations}
         elif path == "/spools":
