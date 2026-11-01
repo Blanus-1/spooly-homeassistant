@@ -102,11 +102,13 @@ class SlotSensor(SpoolyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         item = self._item
-        if not item or not item["spool"]:
+        if not item:
             return {}
-        spool = item["spool"]
+        spool = item["spool"] or {}
         attrs = {
-            "spool_id": spool["id"],
+            # kommt nur mit aktivem Slot-Autopilot, die Dienste assign_slot und clear_slot brauchen ihn
+            "slot_id": item.get("slot_id"),
+            "spool_id": spool.get("id"),
             "number": spool.get("number"),
             "material": spool.get("material"),
             "color": spool.get("color_hex"),

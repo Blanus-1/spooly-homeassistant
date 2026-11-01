@@ -1,0 +1,101 @@
+set_weight:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
+    grams:
+      selector:
+        number:
+          min: 0
+          max: 20000
+          step: any
+          unit_of_measurement: g
+    gross_grams:
+      selector:
+        number:
+          min: 0
+          max: 40000
+          step: any
+          unit_of_measurement: g
+
+refill:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
+    grams:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 20000
+          step: any
+          unit_of_measurement: g
+
+assign_slot:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
+    slot:
+      required: true
+      selector:
+        entity:
+          filter:
+            integration: spooly
+            domain: sensor
+    confirm_color:
+      default: false
+      selector:
+        boolean:
+
+clear_slot:
+  fields:
+    slot:
+      required: true
+      selector:
+        entity:
+          filter:
+            integration: spooly
+            domain: sensor
+
+move:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
+    location:
+      required: true
+      example: "Schrank 01 · Fach vorne"
+      selector:
+        text:
+
+archive:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
+
+restore:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            integration: spooly
