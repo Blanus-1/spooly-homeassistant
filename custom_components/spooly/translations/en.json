@@ -95,12 +95,36 @@
       },
       "calls_today": {
         "name": "Calls today"
+      },
+      "maintenance_task": {
+        "state": {
+          "due": "Due",
+          "soon": "Soon",
+          "ok": "OK"
+        }
+      },
+      "maintenance_due": {
+        "name": "Due maintenance"
+      },
+      "print_hours": {
+        "name": "Print hours"
+      },
+      "filament_month": {
+        "name": "Filament this month"
+      },
+      "stock_value": {
+        "name": "Stock value"
       }
     },
     "binary_sensor": {
       "low": {
         "name": "Low"
       }
+    }
+  },
+  "device": {
+    "printer": {
+      "name": "Printer"
     }
   },
   "exceptions": {
@@ -153,7 +177,7 @@
       "message": "The spool is probably in a running print and can only be changed afterwards."
     },
     "not_found": {
-      "message": "Spooly does not know this spool or slot (anymore)."
+      "message": "Spooly does not know this spool, slot or maintenance task (anymore)."
     },
     "invalid_input": {
       "message": "Spooly rejected the values. Check them."
@@ -181,6 +205,9 @@
     },
     "location_ambiguous": {
       "message": "Several storage locations have this name. Use the full path or the id."
+    },
+    "not_a_task": {
+      "message": "Pick the sensor of a maintenance task."
     }
   },
   "services": {
@@ -276,6 +303,51 @@
           "name": "Spool",
           "description": "The device of the archived spool."
         }
+      }
+    },
+    "complete_maintenance": {
+      "name": "Maintenance done",
+      "description": "Marks a maintenance task as done. Pick the sensor of the task.",
+      "fields": {
+        "task": {
+          "name": "Task",
+          "description": "The sensor of the maintenance task."
+        },
+        "action": {
+          "name": "What was done",
+          "description": "Replaced, cleaned or checked. Without it Spooly uses the usual action of the task."
+        },
+        "notes": {
+          "name": "Note",
+          "description": "Free text, saved with the entry in Spooly."
+        }
+      }
+    },
+    "snooze_maintenance": {
+      "name": "Snooze maintenance",
+      "description": "Postpones a maintenance task. Pick the sensor of the task.",
+      "fields": {
+        "task": {
+          "name": "Task",
+          "description": "The sensor of the maintenance task."
+        },
+        "days": {
+          "name": "Days",
+          "description": "How many days the task stays quiet."
+        },
+        "reason": {
+          "name": "Reason",
+          "description": "Free text, saved in Spooly."
+        }
+      }
+    }
+  },
+  "selector": {
+    "maintenance_action": {
+      "options": {
+        "replace": "Replaced",
+        "clean": "Cleaned",
+        "check": "Checked"
       }
     }
   }

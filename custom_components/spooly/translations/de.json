@@ -95,12 +95,36 @@
       },
       "calls_today": {
         "name": "Aufrufe heute"
+      },
+      "maintenance_task": {
+        "state": {
+          "due": "Fällig",
+          "soon": "Bald",
+          "ok": "OK"
+        }
+      },
+      "maintenance_due": {
+        "name": "Fällige Wartungen"
+      },
+      "print_hours": {
+        "name": "Druckstunden"
+      },
+      "filament_month": {
+        "name": "Filament diesen Monat"
+      },
+      "stock_value": {
+        "name": "Lagerwert"
       }
     },
     "binary_sensor": {
       "low": {
         "name": "Niedrig"
       }
+    }
+  },
+  "device": {
+    "printer": {
+      "name": "Drucker"
     }
   },
   "exceptions": {
@@ -153,7 +177,7 @@
       "message": "Die Spule steckt vermutlich in einem laufenden Druck und lässt sich erst danach ändern."
     },
     "not_found": {
-      "message": "Spooly kennt diese Spule oder diesen Slot nicht (mehr)."
+      "message": "Spooly kennt diese Spule, diesen Slot oder diese Wartungsaufgabe nicht (mehr)."
     },
     "invalid_input": {
       "message": "Spooly hat die Werte abgelehnt. Prüfe sie."
@@ -181,6 +205,9 @@
     },
     "location_ambiguous": {
       "message": "Mehrere Lagerorte heißen so. Nimm den ganzen Pfad oder die Kennung."
+    },
+    "not_a_task": {
+      "message": "Wähle den Sensor einer Wartungsaufgabe."
     }
   },
   "services": {
@@ -276,6 +303,51 @@
           "name": "Spule",
           "description": "Das Gerät der archivierten Spule."
         }
+      }
+    },
+    "complete_maintenance": {
+      "name": "Wartung erledigt",
+      "description": "Markiert eine Wartungsaufgabe als erledigt. Gewählt wird der Sensor der Aufgabe.",
+      "fields": {
+        "task": {
+          "name": "Aufgabe",
+          "description": "Der Sensor der Wartungsaufgabe."
+        },
+        "action": {
+          "name": "Was wurde gemacht",
+          "description": "Getauscht, gereinigt oder geprüft. Ohne Angabe nimmt Spooly die übliche Tätigkeit der Aufgabe."
+        },
+        "notes": {
+          "name": "Notiz",
+          "description": "Freitext, wird in Spooly beim Eintrag gespeichert."
+        }
+      }
+    },
+    "snooze_maintenance": {
+      "name": "Wartung zurückstellen",
+      "description": "Schiebt eine Wartungsaufgabe auf. Gewählt wird der Sensor der Aufgabe.",
+      "fields": {
+        "task": {
+          "name": "Aufgabe",
+          "description": "Der Sensor der Wartungsaufgabe."
+        },
+        "days": {
+          "name": "Tage",
+          "description": "Wie viele Tage die Aufgabe Ruhe gibt."
+        },
+        "reason": {
+          "name": "Grund",
+          "description": "Freitext, wird in Spooly gespeichert."
+        }
+      }
+    }
+  },
+  "selector": {
+    "maintenance_action": {
+      "options": {
+        "replace": "Getauscht",
+        "clean": "Gereinigt",
+        "check": "Geprüft"
       }
     }
   }
