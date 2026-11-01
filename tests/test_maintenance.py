@@ -18,11 +18,12 @@ from custom_components.spooly import async_remove_config_entry_device
 from custom_components.spooly.const import DOMAIN, UPDATE_INTERVAL
 from custom_components.spooly.entity import maint_printer_device_id
 
-from .common import make_printer, make_task
+from .common import make_printer, make_slot, make_task
 from .test_integration import entity_id, refresh, setup_entry
 from .test_services import call, cooldown
 
-COMPONENT = Path(__file__).parent.parent / "custom_components" / "spooly"
+NAME = "Bambu X1C"
+COMPONENT =Path(__file__).parent.parent / "custom_components" / "spooly"
 
 
 def task_entity(hass: HomeAssistant, entry, task_id: str = "task-1") -> str:
@@ -78,7 +79,7 @@ async def test_printer_device_and_sensors(hass: HomeAssistant, aioclient_mock: A
     entry, _ = await setup_maintenance(hass, aioclient_mock)
 
     device = dr.async_get(hass).async_get_device_by_identifier(
-        (DOMAIN, maint_printer_device_id(entry, "prn-1")), entry.entry_id
+        (DOMAIN, maint_printer_device_id(entry, "prn-1", NAME)), entry.entry_id
     )
     assert device.name == "Bambu X1C"
     assert device.via_device_id is not None
@@ -102,9 +103,15 @@ async def test_printer_without_name_gets_fallback(hass: HomeAssistant, aioclient
         hass, aioclient_mock, maint_printers=[make_printer(name=None)], tasks=[make_task(printer=None)]
     )
     device = dr.async_get(hass).async_get_device_by_identifier(
-        (DOMAIN, maint_printer_device_id(entry, "prn-1")), entry.entry_id
+        (DOMAIN, maint_printer_device_id(entry, "prn-1", None)), entry.entry_id
     )
     assert device.name in ("Drucker", "Printer")
+
+
+async def test_slots_and_maintenance_share_one_device(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
+    entry, _ = await setup_maintenance(hass, aioclient_mock, slots=[make_slot(NAME, "1-1")])
+    geraete = [d for d in dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id) if d.name == NAME]
+    assert len(geraete) == 1
 
 
 async def test_hub_sensors(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
@@ -159,7 +166,7 @@ async def test_task_vanishes_and_comes_back(hass: HomeAssistant, aioclient_mock:
 async def test_printer_vanishes_and_devices(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
     entry, fake = await setup_maintenance(hass, aioclient_mock)
     devices = dr.async_get(hass)
-    device = devices.async_get_device_by_identifier((DOMAIN, maint_printer_device_id(entry, "prn-1")), entry.entry_id)
+    device = devices.async_get_device_by_identifier((DOMAIN, maint_printer_device_id(entry, "prn-1", NAME)), entry.entry_id)
     assert await async_remove_config_entry_device(hass, entry, device) is False
 
     fake.maint_printers, fake.tasks = [], []

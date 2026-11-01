@@ -39,8 +39,9 @@ def printer_device_id(entry: SpoolyConfigEntry, printer: str) -> str:
     return f"{entry.entry_id}_printer_{printer_key(printer)}"
 
 
-def maint_printer_device_id(entry: SpoolyConfigEntry, printer_id: str) -> str:
-    return f"{entry.entry_id}_maintprinter_{printer_id}"
+def maint_printer_device_id(entry: SpoolyConfigEntry, printer_id: str, name: str | None) -> str:
+    """Mit Namen dasselbe Gerät wie seine Slots, ohne Namen über die Kennung aus der Wartung."""
+    return printer_device_id(entry, name) if name else f"{entry.entry_id}_maintprinter_{printer_id}"
 
 
 def device_ids(entry: SpoolyConfigEntry, data: SpoolyData) -> set[str]:
@@ -48,7 +49,7 @@ def device_ids(entry: SpoolyConfigEntry, data: SpoolyData) -> set[str]:
     ids = {entry.entry_id}
     ids.update(spool_device_id(entry, spool_id) for spool_id in data.spools)
     ids.update(printer_device_id(entry, item["printer"]) for item in data.slots.values())
-    ids.update(maint_printer_device_id(entry, printer_id) for printer_id in data.maint_printers)
+    ids.update(maint_printer_device_id(entry, pid, p.get("printer")) for pid, p in data.maint_printers.items())
     return ids
 
 
@@ -85,7 +86,7 @@ class SpoolEntity(SpoolyEntity):
 def maint_printer_device(coordinator: SpoolyCoordinator, printer_id: str, name: str | None) -> DeviceInfo:
     """Das Gerät eines Druckers aus der Wartung. Ohne Namen gilt der übersetzte Fallback."""
     info = DeviceInfo(
-        identifiers={(DOMAIN, maint_printer_device_id(coordinator.config_entry, printer_id))},
+        identifiers={(DOMAIN, maint_printer_device_id(coordinator.config_entry, printer_id, name))},
         via_device_id=coordinator.hub_device_id,
     )
     if name:

@@ -10,7 +10,7 @@ Zeigt deine Spulen und Slots aus [Spooly](https://spooly.eu) in Home Assistant a
   - Sensor **Restgewicht** in Gramm. Attribute: Hersteller, Material, Finish, Farbe, Lagerort, Spulengröße und Füllstand in Prozent.
   - Binärsensor **Niedrig**. Er ist an, wenn Spooly die Spule als niedrig oder kritisch meldet (Attribut `level`). Die Schwellen stellst du in Spooly ein, die Integration rechnet nichts selbst.
 - **Je Drucker ein Gerät** mit einem Sensor pro Slot. Der Zustand ist der Name der Spule im Slot, bei leerem Slot `unbekannt`. Attribute: Spulen-ID, Nummer, Material, Farbe und `slot_id` (nur mit aktivem Slot-Autopilot).
-- **Je Drucker aus der Wartung ein Gerät** (es hat den Namen des Druckers, ein zweites Gerät gleichen Namens trägt die Slots) mit
+- **Je Drucker aus der Wartung ein Gerät** (dasselbe wie für seine Slots) mit
   - einem Sensor **Fällige Wartungen** (Anzahl, Attribut `soon_count` für „bald fällig“),
   - einem Sensor **Druckstunden** in Stunden,
   - **einem Sensor je Wartungsaufgabe** mit dem Zustand `Fällig`, `Bald` oder `OK`. Attribute: `metric`, `interval`, `used`, `remaining`, `eta_days`, `last_done_at`, `snoozed_until`, `default_action`.
@@ -94,7 +94,7 @@ Shows your spools and printer slots from [Spooly](https://spooly.eu) in Home Ass
   - a **Remaining weight** sensor in grams. Attributes: manufacturer, material, finish, color, location, spool size and fill level in percent.
   - a **Low** binary sensor. It is on when Spooly reports the spool as low or critical (attribute `level`). You set the thresholds in Spooly, the integration calculates nothing itself.
 - **One device per printer** with a sensor per slot. The state is the name of the spool in the slot, `unknown` for an empty slot. Attributes: spool id, number, material, color and `slot_id` (only with the slot autopilot active).
-- **One device per printer from the maintenance plan** (it carries the printer's name, a second device of the same name holds the slots) with
+- **One device per printer from the maintenance plan** (the same one that holds its slots) with
   - a **Due maintenance** sensor (count, attribute `soon_count` for "due soon"),
   - a **Print hours** sensor in hours,
   - **one sensor per maintenance task** with the state `Due`, `Soon` or `OK`. Attributes: `metric`, `interval`, `used`, `remaining`, `eta_days`, `last_done_at`, `snoozed_until`, `default_action`.
