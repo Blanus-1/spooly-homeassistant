@@ -1,4 +1,4 @@
-"""Einrichtung mit dem API-Schlüssel aus Spooly, dazu Reauth, wenn der Schlüssel widerrufen wird."""
+"""Einrichtung mit Anmeldung bei Spooly (OAuth) oder mit API-Schlüssel, dazu Reauth für beide Wege."""
 
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ from urllib.parse import urlparse
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.config_entry_oauth2_flow import AbstractOAuth2FlowHandler
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import (
@@ -25,6 +26,7 @@ from .api import (
     SpoolyRateLimitError,
 )
 from .const import CONF_API_KEY, CONF_URL, DEFAULT_URL, DOMAIN
+from .oauth import SpoolyImplementation, origin
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,30 +50,94 @@ def url_allowed(url: str) -> bool:
     return parts.scheme == "https" or (parts.scheme == "http" and parts.hostname in LOCAL_HOSTS)
 
 
-class SpoolyConfigFlow(ConfigFlow, domain=DOMAIN):
+def advanced_section() -> section:
+    # die Adresse bleibt eingeklappt, sie ist nur für Tests gegen eine andere Umgebung gedacht
+    return section(
+        vol.Schema({vol.Optional(CONF_URL, default=DEFAULT_URL): str}),
+        {"collapsed": True},
+    )
+
+
+async def fetch_me(client: SpoolyClient) -> tuple[dict[str, Any] | None, str | None]:
+    """Fragt /me ab. Ergebnis: (Konto, None) oder (None, Fehlerschlüssel)."""
+    try:
+        return await client.get_me(), None
+    except SpoolyAuthError:
+        return None, "invalid_auth"
+    except SpoolyProExpiredError:
+        return None, "pro_expired"
+    except SpoolyApiDisabledError:
+        return None, "api_disabled"
+    except SpoolyRateLimitError:
+        return None, "rate_limited"
+    except SpoolyConnectionError:
+        return None, "cannot_connect"
+    except SpoolyError:
+        _LOGGER.exception("Unexpected response from Spooly")
+        return None, "unknown"
+
+
+class SpoolyConfigFlow(AbstractOAuth2FlowHandler, domain=DOMAIN):
+    DOMAIN = DOMAIN
     VERSION = 1
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._api_url = DEFAULT_URL
+
+    @property
+    def logger(self) -> logging.Logger:
+        return _LOGGER
+
     async def _check_key(self, api_key: str, url: str) -> str | None:
-        """Fragt /me ab und gibt den Fehlerschlüssel zurück, None heißt: Schlüssel passt."""
+        """Gibt den Fehlerschlüssel zurück, None heißt: Schlüssel passt."""
         client = SpoolyClient(async_get_clientsession(self.hass), api_key, url)
-        try:
-            await client.get_me()
-        except SpoolyAuthError:
-            return "invalid_auth"
-        except SpoolyProExpiredError:
-            return "pro_expired"
-        except SpoolyApiDisabledError:
-            return "api_disabled"
-        except SpoolyRateLimitError:
-            return "rate_limited"
-        except SpoolyConnectionError:
-            return "cannot_connect"
-        except SpoolyError:
-            _LOGGER.exception("Unexpected response from Spooly")
-            return "unknown"
-        return None
+        return (await fetch_me(client))[1]
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_show_menu(step_id="user", menu_options=["oauth", "key"])
+
+    # ── Anmeldung bei Spooly ──
+    async def async_step_oauth(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            url = user_input.get(ADVANCED, {}).get(CONF_URL, DEFAULT_URL).strip()
+            if url_allowed(url):
+                self._api_url = url
+                self.flow_impl = SpoolyImplementation(self.hass, origin(url))
+                return await self.async_step_auth()
+            errors["base"] = "invalid_url"
+
+        schema = vol.Schema({vol.Required(ADVANCED, default={}): advanced_section()})
+        return self.async_show_form(
+            step_id="oauth",
+            data_schema=self.add_suggested_values_to_schema(schema, user_input),
+            errors=errors,
+        )
+
+    async def async_oauth_create_entry(self, data: dict[str, Any]) -> ConfigFlowResult:
+        client = SpoolyClient(async_get_clientsession(self.hass), data["token"]["access_token"], self._api_url)
+        me, error = await fetch_me(client)
+        if me is None:
+            return self.async_abort(reason=error)
+        account_id = me.get("account_id")
+        if not account_id:
+            return self.async_abort(reason="unknown")
+
+        await self.async_set_unique_id(account_id)
+        if self.source == SOURCE_REAUTH:
+            self._abort_if_unique_id_mismatch(reason="wrong_account")
+            return self.async_update_reload_and_abort(self._get_reauth_entry(), data_updates=data)
+        self._abort_if_unique_id_configured()
+        # dasselbe Konto kann schon mit einem Schlüssel eingerichtet sein
+        for other in self._async_current_entries():
+            coordinator = getattr(other, "runtime_data", None)
+            if coordinator is not None and coordinator.data and coordinator.data.me.get("account_id") == account_id:
+                return self.async_abort(reason="already_configured")
+        return self.async_create_entry(title=self.flow_impl.name, data={**data, CONF_URL: self._api_url})
+
+    # ── Schlüssel ──
+    async def async_step_key(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             api_key = user_input[CONF_API_KEY].strip()
@@ -89,24 +155,30 @@ class SpoolyConfigFlow(ConfigFlow, domain=DOMAIN):
                         data={CONF_API_KEY: api_key, CONF_URL: url},
                     )
 
-        # die Adresse bleibt eingeklappt, sie ist nur für Tests gegen eine andere Umgebung gedacht
         schema = vol.Schema(
             {
                 vol.Required(CONF_API_KEY): KEY_SELECTOR,
-                vol.Required(ADVANCED, default={}): section(
-                    vol.Schema({vol.Optional(CONF_URL, default=DEFAULT_URL): str}),
-                    {"collapsed": True},
-                ),
+                vol.Required(ADVANCED, default={}): advanced_section(),
             }
         )
         return self.async_show_form(
-            step_id="user",
+            step_id="key",
             data_schema=self.add_suggested_values_to_schema(schema, user_input),
             errors=errors,
         )
 
+    # ── Reauth ──
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
-        return await self.async_step_reauth_confirm()
+        if CONF_API_KEY in entry_data:
+            return await self.async_step_reauth_confirm()
+        self._api_url = entry_data.get(CONF_URL, DEFAULT_URL)
+        return await self.async_step_reauth_oauth()
+
+    async def async_step_reauth_oauth(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is None:
+            return self.async_show_form(step_id="reauth_oauth")
+        self.flow_impl = SpoolyImplementation(self.hass, origin(self._api_url))
+        return await self.async_step_auth()
 
     async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry = self._get_reauth_entry()
@@ -120,7 +192,7 @@ class SpoolyConfigFlow(ConfigFlow, domain=DOMAIN):
             if error := await self._check_key(api_key, entry.data.get(CONF_URL, DEFAULT_URL)):
                 errors["base"] = error
             else:
-                # Spooly nennt keine Konto-Id, ein Schlüssel eines anderen Kontos fällt hier nicht auf
+                # Einträge mit Schlüssel behalten ihre ID, ein Schlüssel eines anderen Kontos fällt hier nicht auf
                 return self.async_update_reload_and_abort(
                     entry,
                     unique_id=unique_id,
