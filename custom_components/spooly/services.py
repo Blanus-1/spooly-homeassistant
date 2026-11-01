@@ -1,4 +1,4 @@
-"""Dienste zum Ändern: Gewicht, Nachfüllen, Slots, Lagerort, Archiv. Endgültiges Löschen gibt es nicht."""
+"""Dienste zum Ändern: Gewicht, Nachfüllen, Slots, Lagerort, Archiv, Wartung. Endgültiges Löschen gibt es nicht."""
 
 from __future__ import annotations
 
@@ -33,6 +33,11 @@ ATTR_GRAMS = "grams"
 ATTR_GROSS_GRAMS = "gross_grams"
 ATTR_CONFIRM_COLOR = "confirm_color"
 ATTR_LOCATION = "location"
+ATTR_TASK = "task"
+ATTR_ACTION = "action"
+ATTR_NOTES = "notes"
+ATTR_DAYS = "days"
+ATTR_REASON = "reason"
 
 GRAMS = vol.All(vol.Coerce(float), vol.Range(min=0, max=40000))
 
@@ -44,6 +49,20 @@ ASSIGN_SCHEMA = SPOOL_SCHEMA.extend(
     {vol.Required(ATTR_SLOT): cv.entity_id, vol.Optional(ATTR_CONFIRM_COLOR, default=False): cv.boolean}
 )
 CLEAR_SCHEMA = vol.Schema({vol.Required(ATTR_SLOT): cv.entity_id})
+COMPLETE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_TASK): cv.entity_id,
+        vol.Optional(ATTR_ACTION): vol.In(["replace", "clean", "check"]),
+        vol.Optional(ATTR_NOTES): cv.string,
+    }
+)
+SNOOZE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_TASK): cv.entity_id,
+        vol.Required(ATTR_DAYS): vol.All(vol.Coerce(int), vol.In([7, 14, 30])),
+        vol.Optional(ATTR_REASON): cv.string,
+    }
+)
 
 # Fehlercode von Spooly -> Schlüssel der Übersetzung
 HTTP_ERRORS = {
@@ -89,6 +108,15 @@ def _slot_target(hass: HomeAssistant, entity_id: str) -> tuple[SpoolyCoordinator
     if not item or not item.get("slot_id"):
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="slot_autopilot_off")
     return coordinator, item["slot_id"]
+
+
+def _task_target(hass: HomeAssistant, entity_id: str) -> tuple[SpoolyCoordinator, str]:
+    """Die Aufgaben-Id zum Aufgaben-Sensor. Ob es die Aufgabe noch gibt, sagt Spooly beim Aufruf."""
+    reg_entry = er.async_get(hass).async_get(entity_id)
+    prefix = f"{reg_entry.config_entry_id}_task_" if reg_entry else ""
+    if reg_entry is None or reg_entry.platform != DOMAIN or not (reg_entry.unique_id or "").startswith(prefix):
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_a_task")
+    return _loaded_coordinator(hass, reg_entry.config_entry_id), reg_entry.unique_id.removeprefix(prefix)
 
 
 def _error(coordinator: SpoolyCoordinator, err: SpoolyError) -> HomeAssistantError:
@@ -199,6 +227,18 @@ async def _clear_slot(call: ServiceCall) -> None:
     await _perform(coordinator, coordinator.client.clear_slot(slot_id))
 
 
+async def _complete_maintenance(call: ServiceCall) -> None:
+    coordinator, task_id = _task_target(call.hass, call.data[ATTR_TASK])
+    notes = call.data.get(ATTR_NOTES, "").strip() or None
+    await _perform(coordinator, coordinator.client.complete_maintenance(task_id, call.data.get(ATTR_ACTION), notes))
+
+
+async def _snooze_maintenance(call: ServiceCall) -> None:
+    coordinator, task_id = _task_target(call.hass, call.data[ATTR_TASK])
+    reason = call.data.get(ATTR_REASON, "").strip() or None
+    await _perform(coordinator, coordinator.client.snooze_maintenance(task_id, call.data[ATTR_DAYS], reason))
+
+
 SERVICES: dict[str, tuple[Any, Any]] = {
     "set_weight": (_set_weight, SET_WEIGHT_SCHEMA),
     "refill": (_refill, REFILL_SCHEMA),
@@ -207,6 +247,8 @@ SERVICES: dict[str, tuple[Any, Any]] = {
     "move": (_move, MOVE_SCHEMA),
     "archive": (_archive, SPOOL_SCHEMA),
     "restore": (_restore, SPOOL_SCHEMA),
+    "complete_maintenance": (_complete_maintenance, COMPLETE_SCHEMA),
+    "snooze_maintenance": (_snooze_maintenance, SNOOZE_SCHEMA),
 }
 
 

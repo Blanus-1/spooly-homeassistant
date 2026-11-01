@@ -99,3 +99,47 @@ restore:
         device:
           filter:
             integration: spooly
+
+complete_maintenance:
+  fields:
+    task:
+      required: true
+      selector:
+        entity:
+          filter:
+            integration: spooly
+            domain: sensor
+    action:
+      selector:
+        select:
+          options:
+            - replace
+            - clean
+            - check
+          translation_key: maintenance_action
+    notes:
+      selector:
+        text:
+          multiline: true
+
+snooze_maintenance:
+  fields:
+    task:
+      required: true
+      selector:
+        entity:
+          filter:
+            integration: spooly
+            domain: sensor
+    days:
+      required: true
+      default: "7"
+      selector:
+        select:
+          options:
+            - "7"
+            - "14"
+            - "30"
+    reason:
+      selector:
+        text:
