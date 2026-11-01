@@ -39,11 +39,16 @@ def printer_device_id(entry: SpoolyConfigEntry, printer: str) -> str:
     return f"{entry.entry_id}_printer_{printer_key(printer)}"
 
 
+def maint_printer_device_id(entry: SpoolyConfigEntry, printer_id: str) -> str:
+    return f"{entry.entry_id}_maintprinter_{printer_id}"
+
+
 def device_ids(entry: SpoolyConfigEntry, data: SpoolyData) -> set[str]:
     """Alle Geräte, die zu den aktuellen Daten gehören (für das Entfernen alter Geräte)."""
     ids = {entry.entry_id}
     ids.update(spool_device_id(entry, spool_id) for spool_id in data.spools)
     ids.update(printer_device_id(entry, item["printer"]) for item in data.slots.values())
+    ids.update(maint_printer_device_id(entry, printer_id) for printer_id in data.maint_printers)
     return ids
 
 
@@ -75,6 +80,19 @@ class SpoolEntity(SpoolyEntity):
     def available(self) -> bool:
         # archivierte oder gelöschte Spulen fehlen in der Antwort
         return super().available and self.spool is not None
+
+
+def maint_printer_device(coordinator: SpoolyCoordinator, printer_id: str, name: str | None) -> DeviceInfo:
+    """Das Gerät eines Druckers aus der Wartung. Ohne Namen gilt der übersetzte Fallback."""
+    info = DeviceInfo(
+        identifiers={(DOMAIN, maint_printer_device_id(coordinator.config_entry, printer_id))},
+        via_device_id=coordinator.hub_device_id,
+    )
+    if name:
+        info["name"] = name
+    else:
+        info["translation_key"] = "printer"
+    return info
 
 
 @callback
