@@ -3,7 +3,28 @@
     "step": {
       "user": {
         "title": "Connect Spooly",
-        "description": "Create the key in Spooly under Settings, Devices & keys. The integration only reads and never changes anything in Spooly.",
+        "description": "How do you want to connect Home Assistant with Spooly?",
+        "menu_options": {
+          "oauth": "Sign in with Spooly",
+          "key": "Enter a key"
+        }
+      },
+      "oauth": {
+        "title": "Sign in with Spooly",
+        "description": "Spooly opens in a new window, where you allow access. Home Assistant never sees your password.",
+        "sections": {
+          "advanced": {
+            "name": "Advanced",
+            "description": "Only change this if you are working against a test environment.",
+            "data": {
+              "url": "API address"
+            }
+          }
+        }
+      },
+      "key": {
+        "title": "Enter a key",
+        "description": "Create the key in Spooly under Settings, Devices & keys. Switch on \"Can also change\" if Home Assistant should be allowed to change spools.",
         "sections": {
           "advanced": {
             "name": "Advanced",
@@ -20,9 +41,13 @@
           "api_key": "Starts with spk_"
         }
       },
+      "reauth_oauth": {
+        "title": "Sign in again",
+        "description": "Spooly rejected the connection, or it needs more permissions. Sign in again and allow changes."
+      },
       "reauth_confirm": {
         "title": "Enter a new key",
-        "description": "Spooly rejected the key. It was probably revoked. Create a new one in Spooly and enter it here.",
+        "description": "Spooly rejected the key. It was probably revoked, or it may only read. Create a new one in Spooly (with \"Can also change\" if you want to change spools) and enter it here.",
         "data": {
           "api_key": "API key"
         },
@@ -41,8 +66,23 @@
       "unknown": "Spooly answered unexpectedly. Details are in the log."
     },
     "abort": {
-      "already_configured": "This key is already set up.",
-      "reauth_successful": "The new key has been saved."
+      "already_configured": "This Spooly account or key is already set up.",
+      "reauth_successful": "The connection to Spooly has been renewed.",
+      "wrong_account": "This is a different Spooly account than the one that was set up. Sign in with the same account.",
+      "invalid_auth": "Spooly rejected the sign-in.",
+      "pro_expired": "Spooly Pro has expired. Sign in again once Pro is active.",
+      "api_disabled": "The API is not enabled for your account yet.",
+      "rate_limited": "You have reached today's limit of calls. Try again later.",
+      "cannot_connect": "Spooly cannot be reached. Check the internet connection.",
+      "unknown": "Spooly answered unexpectedly. Details are in the log.",
+      "authorize_url_timeout": "Creating the sign-in address took too long.",
+      "no_url_available": "Home Assistant has no address that Spooly can send you back to. Check the setup of My Home Assistant.",
+      "oauth_error": "Spooly sent unusable data back.",
+      "oauth_failed": "Spooly did not accept the sign-in.",
+      "oauth_timeout": "Spooly took too long to answer.",
+      "oauth_unauthorized": "Spooly rejected the sign-in.",
+      "oauth_implementation_unavailable": "The sign-in is not available right now. Try again later.",
+      "user_rejected_authorize": "Access was declined in Spooly."
     }
   },
   "entity": {
@@ -78,6 +118,165 @@
     },
     "api_error": {
       "message": "Spooly answered unexpectedly: {error}"
+    },
+    "no_write_permission": {
+      "message": "Spooly only allows this connection to read. Home Assistant now offers to sign in again (Settings, Devices & services, Spooly). Allow changes there."
+    },
+    "auth_failed": {
+      "message": "Spooly rejected the sign-in. Home Assistant offers to sign in again."
+    },
+    "change_limit": {
+      "message": "Spooly is limiting changes right now. Try again in {seconds} seconds."
+    },
+    "tare_missing": {
+      "message": "This spool has no empty spool weight yet. Set the tare in Spooly first, or give the weight without the spool."
+    },
+    "slot_autopilot_off": {
+      "message": "Slots can only be changed while the slot autopilot is active in Spooly."
+    },
+    "other_color": {
+      "message": "The printer reports a different color in the slot than the spool has. If the assignment is right anyway, switch on \"Confirm color\"."
+    },
+    "spool_archived": {
+      "message": "The spool is archived. Restore it first."
+    },
+    "busy": {
+      "message": "The slot was changed at the same time. Try again in a moment."
+    },
+    "above_spool_size": {
+      "message": "The weight would be larger than the spool."
+    },
+    "gross_not_above_tare": {
+      "message": "The gross weight must be larger than the empty spool weight."
+    },
+    "spool_in_print": {
+      "message": "The spool is probably in a running print and can only be changed afterwards."
+    },
+    "not_found": {
+      "message": "Spooly does not know this spool or slot (anymore)."
+    },
+    "invalid_input": {
+      "message": "Spooly rejected the values. Check them."
+    },
+    "rejected": {
+      "message": "Spooly rejected the change (HTTP {status}, {code})."
+    },
+    "not_a_spool": {
+      "message": "Pick the device of a spool. Printers and the Spooly device itself do not work."
+    },
+    "not_a_slot": {
+      "message": "Pick the sensor of a slot."
+    },
+    "different_accounts": {
+      "message": "The spool and the slot belong to different Spooly accounts."
+    },
+    "entry_not_loaded": {
+      "message": "The Spooly integration is not loaded right now."
+    },
+    "weight_exactly_one": {
+      "message": "Give either grams or gross weight, not both and not neither."
+    },
+    "location_not_found": {
+      "message": "Spooly does not know this storage location. Use the name as shown in Spooly, including the path."
+    },
+    "location_ambiguous": {
+      "message": "Several storage locations have this name. Use the full path or the id."
+    }
+  },
+  "services": {
+    "set_weight": {
+      "name": "Set weight",
+      "description": "Sets the remaining weight of a spool. Give either the filament weight or the gross weight from a scale.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the spool."
+        },
+        "grams": {
+          "name": "Filament weight",
+          "description": "Remaining filament in grams, without the empty spool."
+        },
+        "gross_grams": {
+          "name": "Gross weight",
+          "description": "Weight of the spool on the scale in grams. Needs a known empty spool weight in Spooly."
+        }
+      }
+    },
+    "refill": {
+      "name": "Refill",
+      "description": "Adds grams to the remaining weight of a spool.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the spool."
+        },
+        "grams": {
+          "name": "Grams",
+          "description": "How many grams are added."
+        }
+      }
+    },
+    "assign_slot": {
+      "name": "Assign to slot",
+      "description": "Puts a spool into a printer slot. Needs the slot autopilot in Spooly.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the spool."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "The slot sensor of the printer."
+        },
+        "confirm_color": {
+          "name": "Confirm color",
+          "description": "Assign even if the printer reports a different color."
+        }
+      }
+    },
+    "clear_slot": {
+      "name": "Empty slot",
+      "description": "Removes the spool from a slot. The spool stays in Spooly. Needs the slot autopilot.",
+      "fields": {
+        "slot": {
+          "name": "Slot",
+          "description": "The slot sensor of the printer."
+        }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Moves a spool to a storage location.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the spool."
+        },
+        "location": {
+          "name": "Storage location",
+          "description": "Name as shown in Spooly, including the path, or the id of the location."
+        }
+      }
+    },
+    "archive": {
+      "name": "Archive",
+      "description": "Archives a spool. It leaves the active stock but is not deleted.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the spool."
+        }
+      }
+    },
+    "restore": {
+      "name": "Restore",
+      "description": "Brings an archived spool back into the active stock.",
+      "fields": {
+        "device_id": {
+          "name": "Spool",
+          "description": "The device of the archived spool."
+        }
+      }
     }
   }
 }

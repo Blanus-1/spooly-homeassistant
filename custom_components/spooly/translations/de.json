@@ -3,7 +3,28 @@
     "step": {
       "user": {
         "title": "Spooly verbinden",
-        "description": "Den Schlüssel legst du in Spooly an: Einstellungen, Geräte & Schlüssel. Die Integration liest nur und ändert nichts in Spooly.",
+        "description": "Wie willst du Home Assistant mit Spooly verbinden?",
+        "menu_options": {
+          "oauth": "Mit Spooly anmelden",
+          "key": "Schlüssel eingeben"
+        }
+      },
+      "oauth": {
+        "title": "Mit Spooly anmelden",
+        "description": "Spooly öffnet sich in einem neuen Fenster, dort erlaubst du den Zugriff. Home Assistant sieht dein Passwort nie.",
+        "sections": {
+          "advanced": {
+            "name": "Erweitert",
+            "description": "Nur ändern, wenn du gegen eine Testumgebung arbeitest.",
+            "data": {
+              "url": "Adresse der Schnittstelle"
+            }
+          }
+        }
+      },
+      "key": {
+        "title": "Schlüssel eingeben",
+        "description": "Den Schlüssel legst du in Spooly an: Einstellungen, Geräte & Schlüssel. Schalte „Darf auch ändern“ ein, wenn Home Assistant Spulen ändern darf.",
         "sections": {
           "advanced": {
             "name": "Erweitert",
@@ -20,9 +41,13 @@
           "api_key": "Beginnt mit spk_"
         }
       },
+      "reauth_oauth": {
+        "title": "Neu anmelden",
+        "description": "Spooly hat die Verbindung abgelehnt, oder sie braucht mehr Rechte. Melde dich neu an und erlaube das Ändern."
+      },
       "reauth_confirm": {
         "title": "Neuen Schlüssel eintragen",
-        "description": "Spooly hat den Schlüssel abgelehnt. Er wurde vermutlich widerrufen. Lege in Spooly einen neuen an und trage ihn hier ein.",
+        "description": "Spooly hat den Schlüssel abgelehnt. Er wurde vermutlich widerrufen, oder er darf nur lesen. Lege in Spooly einen neuen an (mit „Darf auch ändern“, wenn du Spulen ändern willst) und trage ihn hier ein.",
         "data": {
           "api_key": "API-Schlüssel"
         },
@@ -41,8 +66,23 @@
       "unknown": "Spooly hat unerwartet geantwortet. Details stehen im Protokoll."
     },
     "abort": {
-      "already_configured": "Dieser Schlüssel ist schon eingerichtet.",
-      "reauth_successful": "Der neue Schlüssel ist gespeichert."
+      "already_configured": "Dieses Spooly-Konto oder dieser Schlüssel ist schon eingerichtet.",
+      "reauth_successful": "Die Verbindung zu Spooly ist erneuert.",
+      "wrong_account": "Das ist ein anderes Spooly-Konto als das eingerichtete. Melde dich mit demselben Konto an.",
+      "invalid_auth": "Spooly hat die Anmeldung abgelehnt.",
+      "pro_expired": "Spooly Pro ist abgelaufen. Melde dich neu an, sobald Pro aktiv ist.",
+      "api_disabled": "Die Schnittstelle ist für dein Konto noch nicht freigeschaltet.",
+      "rate_limited": "Du hast heute die erlaubte Zahl an Aufrufen erreicht. Versuche es später noch einmal.",
+      "cannot_connect": "Spooly ist nicht erreichbar. Prüfe die Internetverbindung.",
+      "unknown": "Spooly hat unerwartet geantwortet. Details stehen im Protokoll.",
+      "authorize_url_timeout": "Die Anmeldeadresse wurde nicht rechtzeitig erstellt.",
+      "no_url_available": "Home Assistant hat keine Adresse, auf die Spooly dich zurückschicken kann. Prüfe die Einrichtung von My Home Assistant.",
+      "oauth_error": "Spooly hat unbrauchbare Daten zurückgeschickt.",
+      "oauth_failed": "Spooly hat die Anmeldung nicht angenommen.",
+      "oauth_timeout": "Spooly hat zu lange nicht geantwortet.",
+      "oauth_unauthorized": "Spooly hat die Anmeldung abgelehnt.",
+      "oauth_implementation_unavailable": "Die Anmeldung ist gerade nicht verfügbar. Versuche es später noch einmal.",
+      "user_rejected_authorize": "Der Zugriff wurde in Spooly abgelehnt."
     }
   },
   "entity": {
@@ -78,6 +118,165 @@
     },
     "api_error": {
       "message": "Spooly hat unerwartet geantwortet: {error}"
+    },
+    "no_write_permission": {
+      "message": "Spooly erlaubt dieser Verbindung nur das Lesen. Home Assistant bietet jetzt die erneute Anmeldung an (Einstellungen, Geräte & Dienste, Spooly). Erlaube dort das Ändern."
+    },
+    "auth_failed": {
+      "message": "Spooly hat die Anmeldung abgelehnt. Home Assistant bietet die erneute Anmeldung an."
+    },
+    "change_limit": {
+      "message": "Spooly begrenzt die Änderungen gerade. Versuche es in {seconds} Sekunden noch einmal."
+    },
+    "tare_missing": {
+      "message": "Für diese Spule ist noch kein Leerspulen-Gewicht hinterlegt. Setze zuerst die Tara in Spooly, oder gib das Gewicht ohne Spule an."
+    },
+    "slot_autopilot_off": {
+      "message": "Slots lassen sich nur ändern, solange der Slot-Autopilot in Spooly aktiv ist."
+    },
+    "other_color": {
+      "message": "Der Drucker meldet im Slot eine andere Farbe als die Spule. Stimmt die Zuordnung trotzdem, schalte „Farbe bestätigen“ ein."
+    },
+    "spool_archived": {
+      "message": "Die Spule ist archiviert. Hole sie zuerst zurück."
+    },
+    "busy": {
+      "message": "Der Slot wurde gleichzeitig geändert. Versuche es gleich noch einmal."
+    },
+    "above_spool_size": {
+      "message": "Das Gewicht wäre größer als die Spule."
+    },
+    "gross_not_above_tare": {
+      "message": "Das Bruttogewicht muss größer sein als das Leerspulen-Gewicht."
+    },
+    "spool_in_print": {
+      "message": "Die Spule steckt vermutlich in einem laufenden Druck und lässt sich erst danach ändern."
+    },
+    "not_found": {
+      "message": "Spooly kennt diese Spule oder diesen Slot nicht (mehr)."
+    },
+    "invalid_input": {
+      "message": "Spooly hat die Werte abgelehnt. Prüfe sie."
+    },
+    "rejected": {
+      "message": "Spooly hat die Änderung abgelehnt (HTTP {status}, {code})."
+    },
+    "not_a_spool": {
+      "message": "Wähle das Gerät einer Spule. Drucker und das Spooly-Gerät selbst gehen nicht."
+    },
+    "not_a_slot": {
+      "message": "Wähle den Sensor eines Slots."
+    },
+    "different_accounts": {
+      "message": "Spule und Slot gehören zu verschiedenen Spooly-Konten."
+    },
+    "entry_not_loaded": {
+      "message": "Die Spooly-Integration ist gerade nicht geladen."
+    },
+    "weight_exactly_one": {
+      "message": "Gib entweder das Gewicht oder das Bruttogewicht an, nicht beides und nicht keins."
+    },
+    "location_not_found": {
+      "message": "Spooly kennt diesen Lagerort nicht. Nimm den Namen wie in Spooly, mit Pfad."
+    },
+    "location_ambiguous": {
+      "message": "Mehrere Lagerorte heißen so. Nimm den ganzen Pfad oder die Kennung."
+    }
+  },
+  "services": {
+    "set_weight": {
+      "name": "Gewicht setzen",
+      "description": "Setzt das Restgewicht einer Spule. Gib entweder das Filamentgewicht oder das Bruttogewicht von einer Waage an.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der Spule."
+        },
+        "grams": {
+          "name": "Filamentgewicht",
+          "description": "Restliches Filament in Gramm, ohne die leere Spule."
+        },
+        "gross_grams": {
+          "name": "Bruttogewicht",
+          "description": "Gewicht der Spule auf der Waage in Gramm. Braucht ein bekanntes Leerspulen-Gewicht in Spooly."
+        }
+      }
+    },
+    "refill": {
+      "name": "Nachfüllen",
+      "description": "Addiert Gramm zum Restgewicht einer Spule.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der Spule."
+        },
+        "grams": {
+          "name": "Gramm",
+          "description": "Wie viel Gramm dazukommen."
+        }
+      }
+    },
+    "assign_slot": {
+      "name": "Slot zuordnen",
+      "description": "Legt eine Spule in einen Drucker-Slot. Braucht den Slot-Autopiloten in Spooly.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der Spule."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "Der Slot-Sensor des Druckers."
+        },
+        "confirm_color": {
+          "name": "Farbe bestätigen",
+          "description": "Auch zuordnen, wenn der Drucker eine andere Farbe meldet."
+        }
+      }
+    },
+    "clear_slot": {
+      "name": "Slot leeren",
+      "description": "Nimmt die Spule aus einem Slot. Die Spule bleibt in Spooly. Braucht den Slot-Autopiloten.",
+      "fields": {
+        "slot": {
+          "name": "Slot",
+          "description": "Der Slot-Sensor des Druckers."
+        }
+      }
+    },
+    "move": {
+      "name": "Umlagern",
+      "description": "Legt eine Spule in einen Lagerort.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der Spule."
+        },
+        "location": {
+          "name": "Lagerort",
+          "description": "Name wie in Spooly angezeigt, mit Pfad, oder die Kennung des Lagerorts."
+        }
+      }
+    },
+    "archive": {
+      "name": "Archivieren",
+      "description": "Archiviert eine Spule. Sie verlässt den aktiven Bestand, wird aber nicht gelöscht.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der Spule."
+        }
+      }
+    },
+    "restore": {
+      "name": "Zurückholen",
+      "description": "Holt eine archivierte Spule zurück in den aktiven Bestand.",
+      "fields": {
+        "device_id": {
+          "name": "Spule",
+          "description": "Das Gerät der archivierten Spule."
+        }
+      }
     }
   }
 }
