@@ -83,7 +83,7 @@ async def _error_code(resp: aiohttp.ClientResponse) -> str:
 
 
 class SpoolyClient:
-    """Liest Konto, Spulen und Slots und ändert sie über die wenigen erlaubten Pfade."""
+    """Liest Konto, Spulen, Slots, Wartung und Statistik und ändert sie über die wenigen erlaubten Pfade."""
 
     def __init__(self, session: aiohttp.ClientSession, token: str | TokenGetter, base_url: str) -> None:
         self._session = session
@@ -156,6 +156,12 @@ class SpoolyClient:
     async def get_slots(self) -> list[dict[str, Any]]:
         return (await self._get("/slots"))["items"]
 
+    async def get_maintenance(self) -> dict[str, Any]:
+        return await self._get("/maintenance")
+
+    async def get_statistics(self, year: int, month: int) -> dict[str, Any]:
+        return await self._get("/statistics", {"year": year, "month": month})
+
     async def get_locations(self) -> list[dict[str, Any]]:
         return (await self._get("/locations"))["items"]
 
@@ -182,3 +188,11 @@ class SpoolyClient:
 
     async def clear_slot(self, slot_id: str) -> None:
         await self._request("DELETE", f"/slots/{quote(slot_id, safe='')}")
+
+    async def complete_maintenance(self, task_id: str, action: str | None, notes: str | None) -> None:
+        body = {k: v for k, v in (("action", action), ("notes", notes)) if v}
+        await self._request("POST", f"/maintenance/tasks/{quote(task_id, safe='')}/complete", body=body)
+
+    async def snooze_maintenance(self, task_id: str, days: int, reason: str | None) -> None:
+        body = {"days": days, **({"reason": reason} if reason else {})}
+        await self._request("POST", f"/maintenance/tasks/{quote(task_id, safe='')}/snooze", body=body)
