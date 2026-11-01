@@ -16,7 +16,10 @@ from .common import KEY, FakeSpooly, entry_data
 
 
 async def start(hass: HomeAssistant):
-    return await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    """Startet die Einrichtung und wählt im Menü den Weg mit Schlüssel."""
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    assert result["type"] is FlowResultType.MENU
+    return await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "key"})
 
 
 async def test_setup_ok(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:

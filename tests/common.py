@@ -34,15 +34,23 @@ def make_spool(n: int, **extra: Any) -> dict[str, Any]:
     return spool
 
 
-def make_slot(printer: str, slot: str, spool: dict[str, Any] | None = None) -> dict[str, Any]:
+def make_slot(
+    printer: str, slot: str, spool: dict[str, Any] | None = None, slot_id: str | None = None
+) -> dict[str, Any]:
     item = None
     if spool is not None:
         item = {k: spool[k] for k in ("id", "number", "title", "material", "color_hex")}
-    return {"printer": printer, "slot": slot, "spool": item}
+    slot_item = {"printer": printer, "slot": slot, "spool": item}
+    if slot_id is not None:
+        slot_item["slot_id"] = slot_id
+    return slot_item
 
 
 class FakeSpooly:
-    """Beantwortet /me, /spools und /slots aus dem Speicher. Fehler lassen sich einschalten."""
+    """Beantwortet /me, /spools, /slots und /locations aus dem Speicher und nimmt Änderungen an.
+
+    Fehler lassen sich einschalten: `fail` für alle Pfade, `fail_write` nur für ändernde Aufrufe.
+    """
 
     def __init__(self, aioclient_mock: AiohttpClientMocker, base_url: str = DEFAULT_URL) -> None:
         self.mock = aioclient_mock
@@ -52,32 +60,69 @@ class FakeSpooly:
             "daily_limit": 10000,
             "key_name": "Home Assistant",
             "key_kind": "home_assistant",
+            "account_id": "acc-1",
             "currency": "EUR",
         }
         self.spools: list[dict[str, Any]] = [make_spool(1)]
+        self.archived: list[dict[str, Any]] = []
         self.slots: list[dict[str, Any]] = []
+        self.locations: list[dict[str, Any]] = [
+            {"id": "loc-1", "name": "Schrank 01 · Fach vorne", "is_default": False},
+            {"id": "loc-2", "name": "Regal 1", "is_default": True},
+        ]
         # (Status, Fehlercode, Header), gilt für alle Pfade
         self.error: tuple[int, str, dict[str, str]] | None = None
+        # (Status, Körper, Header), gilt nur für ändernde Aufrufe
+        self.write_error: tuple[int, Any, dict[str, str]] | None = None
+        self.write_exc: Exception | None = None
         self.paths: list[str] = []
-        aioclient_mock.get(re.compile(re.escape(base_url) + "/"), side_effect=self._handle)
+        # alle Aufrufe mit ihrem Autorisierungskopf: (Methode, Pfad, Kopfzeilen)
+        self.requests: list[tuple[str, str, dict[str, str]]] = []
+        # nur ändernde Aufrufe: (Methode, Pfad, Körper)
+        self.writes: list[tuple[str, str, Any]] = []
+        pattern = re.compile(re.escape(base_url) + "/")
+        for register in (aioclient_mock.get, aioclient_mock.post, aioclient_mock.put, aioclient_mock.delete):
+            register(pattern, side_effect=self._handle)
 
     def fail(self, status: int, code: str, headers: dict[str, str] | None = None) -> None:
         self.error = (status, code, headers or {})
 
+    def fail_write(
+        self, status: int, code: str = "", headers: dict[str, str] | None = None, body: Any = None
+    ) -> None:
+        self.write_error = (status, body if body is not None else {"detail": {"code": code, "message": "Fehler"}}, headers or {})
+
     def recover(self) -> None:
         self.error = None
+        self.write_error = None
+        self.write_exc = None
+
+    @property
+    def tokens(self) -> list[str]:
+        """Die Zugangstoken, mit denen die Aufrufe kamen, in der Reihenfolge."""
+        return [h["Authorization"].removeprefix("Bearer ") for _, _, h in self.requests]
 
     async def _handle(self, method: str, url: Any, data: Any) -> AiohttpClientMockResponse:
+        method = method.upper()
         path = url.path.rsplit("/api/v1", 1)[1]
-        self.paths.append(path)
+        headers = dict(self.mock.mock_calls[-1][3] or {})
+        self.requests.append((method, path, headers))
+        if method == "GET":
+            self.paths.append(path)
+        else:
+            self.writes.append((method, path, data))
         if self.error:
-            status, code, headers = self.error
+            status, code, err_headers = self.error
             body = {"detail": {"code": code, "message": "Fehler"}}
-            return AiohttpClientMockResponse(method, url, status=status, json=body, headers=headers)
+            return AiohttpClientMockResponse(method, url, status=status, json=body, headers=err_headers)
+        if method != "GET":
+            return self._write(method, url, path, data)
         if path == "/me":
             body = self.me
         elif path == "/slots":
             body = {"items": self.slots}
+        elif path == "/locations":
+            body = {"items": self.locations}
         elif path == "/spools":
             query = url.query
             limit, offset = int(query["limit"]), int(query["offset"])
@@ -92,6 +137,31 @@ class FakeSpooly:
         else:
             return AiohttpClientMockResponse(method, url, status=404, json={})
         return AiohttpClientMockResponse(method, url, json=body)
+
+    def _write(self, method: str, url: Any, path: str, data: Any) -> AiohttpClientMockResponse:
+        if self.write_exc:
+            raise self.write_exc
+        if self.write_error:
+            status, body, err_headers = self.write_error
+            return AiohttpClientMockResponse(method, url, status=status, json=body, headers=err_headers)
+        parts = path.strip("/").split("/")
+        if parts[0] == "spools" and len(parts) == 3:
+            spool = next((s for s in [*self.spools, *self.archived] if s["id"] == parts[1]), None)
+            if spool is not None:
+                self._apply(spool, parts[2], data or {})
+        return AiohttpClientMockResponse(method, url, json={"change_id": 1, "summary": "ok", "replayed": False})
+
+    def _apply(self, spool: dict[str, Any], action: str, data: dict[str, Any]) -> None:
+        if action == "weight":
+            spool["remaining_grams"] = data.get("grams", data.get("gross_grams", 0) - 150)
+        elif action == "refill":
+            spool["remaining_grams"] += data["grams"]
+        elif action == "archive" and spool in self.spools:
+            self.spools.remove(spool)
+            self.archived.append(spool)
+        elif action == "restore" and spool in self.archived:
+            self.archived.remove(spool)
+            self.spools.append(spool)
 
 
 def entry_data(api_key: str = KEY) -> dict[str, str]:
