@@ -4,6 +4,8 @@ Zeigt deine Spulen und Slots aus [Spooly](https://spooly.eu) in Home Assistant a
 
 [English version below](#spooly-for-home-assistant)
 
+> **Beta:** Die Integration braucht die Spooly-API. Die ist gerade nur für freigeschaltete Konten offen.
+
 ## Was du siehst
 
 - **Je Spule ein Gerät** (`#Nummer Name`, ohne Nummer nur der Name) mit
@@ -78,13 +80,15 @@ tap_action:
 
 Voraussetzung: Home Assistant 2026.8 oder neuer.
 
-**Mit HACS:** HACS, Menü oben rechts, *Benutzerdefinierte Repositories*, `https://github.com/Blanus-1/spooly-homeassistant` als *Integration* eintragen, Spooly installieren, Home Assistant neu starten.
+**Mit HACS oder dem Marketplace (ab Home Assistant 2026.11):** `https://github.com/Blanus-1/spooly-homeassistant` als benutzerdefiniertes Repository vom Typ *Integration* eintragen, Spooly installieren, Home Assistant neu starten.
 
 **Von Hand:** Den Ordner `custom_components/spooly` in dein Konfigurationsverzeichnis kopieren (dorthin, wo `configuration.yaml` liegt), Home Assistant neu starten.
 
 ---
 
 # Spooly for Home Assistant
+
+> **Beta:** The integration needs the Spooly API, which is currently open to enabled accounts only.
 
 Shows your spools and printer slots from [Spooly](https://spooly.eu) in Home Assistant and can change them (weight, slots, storage location, archive). It also covers the maintenance of your printers.
 
@@ -162,6 +166,6 @@ tap_action:
 
 Requires Home Assistant 2026.8 or newer.
 
-**With HACS:** HACS, menu top right, *Custom repositories*, add `https://github.com/Blanus-1/spooly-homeassistant` as *Integration*, install Spooly, restart Home Assistant.
+**With HACS or the Marketplace (Home Assistant 2026.11 and newer):** add `https://github.com/Blanus-1/spooly-homeassistant` as a custom repository of type *Integration*, install Spooly, restart Home Assistant.
 
 **Manually:** Copy the folder `custom_components/spooly` into your configuration directory (next to `configuration.yaml`) and restart Home Assistant.
