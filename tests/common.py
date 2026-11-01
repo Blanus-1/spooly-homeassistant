@@ -205,6 +205,15 @@ class FakeSpooly:
             status, body, err_headers = self.write_error
             return AiohttpClientMockResponse(method, url, status=status, json=body, headers=err_headers)
         parts = path.strip("/").split("/")
+        if parts[0] == "maintenance" and len(parts) == 4:
+            task = next((t for t in self.tasks if t["id"] == parts[2]), None)
+            if task is None:
+                body = {"detail": {"code": "not_found", "message": "Fehler"}}
+                return AiohttpClientMockResponse(method, url, status=404, json=body)
+            if parts[3] == "complete":
+                task.update(status="ok", remaining=task["interval"], used=0)
+            else:
+                task["snoozed_until"] = "2026-12-31"
         if parts[0] == "spools" and len(parts) == 3:
             spool = next((s for s in [*self.spools, *self.archived] if s["id"] == parts[1]), None)
             if spool is not None:

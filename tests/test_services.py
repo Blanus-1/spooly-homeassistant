@@ -29,7 +29,17 @@ from .common import KEY, FakeSpooly, entry_data, make_slot, make_spool
 from .test_oauth import setup_oauth
 
 COMPONENT = Path(__file__).parent.parent / "custom_components" / "spooly"
-SERVICE_NAMES = {"set_weight", "refill", "assign_slot", "clear_slot", "move", "archive", "restore"}
+SERVICE_NAMES = {
+    "set_weight",
+    "refill",
+    "assign_slot",
+    "clear_slot",
+    "move",
+    "archive",
+    "restore",
+    "complete_maintenance",
+    "snooze_maintenance",
+}
 
 
 async def setup_entry(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker, key: str = KEY, base: str | None = None):
