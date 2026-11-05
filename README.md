@@ -80,7 +80,9 @@ tap_action:
 
 Voraussetzung: Home Assistant 2026.8 oder neuer.
 
-**Mit HACS oder dem Marketplace (ab Home Assistant 2026.11):** `https://github.com/Blanus-1/spooly-homeassistant` als benutzerdefiniertes Repository vom Typ *Integration* eintragen, Spooly installieren, Home Assistant neu starten.
+**Mit dem Marketplace (Home Assistant 2026.11 und neuer):** HACS ist dort eingebaut. Unter Einstellungen › Marketplace oben rechts „Add from link“ wählen, `https://github.com/Blanus-1/spooly-homeassistant` eintragen (Typ *Integration*, falls er nicht erkannt wird), Spooly installieren, Home Assistant neu starten. Für eigene Repositories will der Marketplace eine GitHub-Verbindung.
+
+**Mit HACS (bis Home Assistant 2026.10):** dieselbe Adresse als benutzerdefiniertes Repository vom Typ *Integration* eintragen, Spooly installieren, Home Assistant neu starten.
 
 **Von Hand:** Den Ordner `custom_components/spooly` in dein Konfigurationsverzeichnis kopieren (dorthin, wo `configuration.yaml` liegt), Home Assistant neu starten.
 
@@ -166,6 +168,8 @@ tap_action:
 
 Requires Home Assistant 2026.8 or newer.
 
-**With HACS or the Marketplace (Home Assistant 2026.11 and newer):** add `https://github.com/Blanus-1/spooly-homeassistant` as a custom repository of type *Integration*, install Spooly, restart Home Assistant.
+**With the Marketplace (Home Assistant 2026.11 and newer):** HACS is built in there. Under Settings › Marketplace pick "Add from link" in the upper right, enter `https://github.com/Blanus-1/spooly-homeassistant` (type *Integration* if it isn't detected), install Spooly, restart Home Assistant. For custom repositories the Marketplace wants a GitHub connection.
+
+**With HACS (up to Home Assistant 2026.10):** add the same address as a custom repository of type *Integration*, install Spooly, restart Home Assistant.
 
 **Manually:** Copy the folder `custom_components/spooly` into your configuration directory (next to `configuration.yaml`) and restart Home Assistant.
