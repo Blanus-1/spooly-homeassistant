@@ -9,7 +9,7 @@ Zeigt deine Spulen und Slots aus [Spooly](https://spooly.eu) in Home Assistant a
 ## Was du siehst
 
 - **Je Spule ein Gerät** (`#Nummer Name`, ohne Nummer nur der Name) mit
-  - Sensor **Restgewicht** in Gramm. Attribute: Hersteller, Material, Finish, Farbe, Lagerort, Spulengröße und Füllstand in Prozent.
+  - Sensor **Restgewicht** in Gramm. Attribute: Hersteller, Material (mit Variante wie PLA Basic), Finish, Farbe, Farbname, Lagerort (`location`, dazu `location_id` und `place`), Spulengröße, Leergewicht und Füllstand in Prozent.
   - Binärsensor **Niedrig**. Er ist an, wenn Spooly die Spule als niedrig oder kritisch meldet (Attribut `level`). Die Schwellen stellst du in Spooly ein, die Integration rechnet nichts selbst.
 - **Je Drucker ein Gerät** mit einem Sensor pro Slot. Der Zustand ist der Name der Spule im Slot, bei leerem Slot `unbekannt`. Attribute: Spulen-ID, Nummer, Material, Farbe und `slot_id` (nur mit aktivem Slot-Autopilot).
 - **Je Drucker aus der Wartung ein Gerät** (dasselbe wie für seine Slots) mit
@@ -39,7 +39,7 @@ Alle Dienste brauchen das Recht zu ändern. Fehlt es, kommt eine Meldung, und Ho
 | `spooly.refill` | `grams` zum Restgewicht addieren |
 | `spooly.assign_slot` | Spule in einen Slot legen, bei abweichender Farbe mit `confirm_color` |
 | `spooly.clear_slot` | Spule aus einem Slot nehmen (sie bleibt in Spooly) |
-| `spooly.move` | Spule in einen Lagerort legen, `location` ist der Name wie in Spooly (mit Pfad) oder die Kennung |
+| `spooly.move` | Spule in einen Lagerort legen, `location` ist der Name wie in Spooly (mit Pfad) oder die Kennung, ein Platz kommt dahinter: `Schrank · Fach 1 · Platz 2` |
 | `spooly.archive`, `spooly.restore` | Spule archivieren oder zurückholen |
 | `spooly.complete_maintenance` | Wartungsaufgabe als erledigt melden. `task` ist der Sensor der Aufgabe, optional `action` (`replace`, `clean`, `check`) und `notes` |
 | `spooly.snooze_maintenance` | Wartungsaufgabe zurückstellen. `task` ist der Sensor der Aufgabe, `days` ist 7, 14 oder 30, optional `reason` |
@@ -97,7 +97,7 @@ Shows your spools and printer slots from [Spooly](https://spooly.eu) in Home Ass
 ## What you get
 
 - **One device per spool** (`#number name`, just the name without a number) with
-  - a **Remaining weight** sensor in grams. Attributes: manufacturer, material, finish, color, location, spool size and fill level in percent.
+  - a **Remaining weight** sensor in grams. Attributes: manufacturer, material (with its variant such as PLA Basic), finish, color, color name, location (`location`, plus `location_id` and `place`), spool size, empty spool weight and fill level in percent.
   - a **Low** binary sensor. It is on when Spooly reports the spool as low or critical (attribute `level`). You set the thresholds in Spooly, the integration calculates nothing itself.
 - **One device per printer** with a sensor per slot. The state is the name of the spool in the slot, `unknown` for an empty slot. Attributes: spool id, number, material, color and `slot_id` (only with the slot autopilot active).
 - **One device per printer from the maintenance plan** (the same one that holds its slots) with
@@ -127,7 +127,7 @@ All services need the permission to change. If it is missing you get a message, 
 | `spooly.refill` | Add `grams` to the remaining weight |
 | `spooly.assign_slot` | Put a spool into a slot, `confirm_color` if the printer reports another color |
 | `spooly.clear_slot` | Take the spool out of a slot (it stays in Spooly) |
-| `spooly.move` | Put a spool into a storage location, `location` is the name as shown in Spooly (with path) or the id |
+| `spooly.move` | Put a spool into a storage location, `location` is the name as shown in Spooly (with path) or the id, a place goes after it: `Cabinet · Shelf 1 · Platz 2` |
 | `spooly.archive`, `spooly.restore` | Archive a spool or bring it back |
 | `spooly.complete_maintenance` | Report a maintenance task as done. `task` is the sensor of the task, optional `action` (`replace`, `clean`, `check`) and `notes` |
 | `spooly.snooze_maintenance` | Postpone a maintenance task. `task` is the sensor of the task, `days` is 7, 14 or 30, optional `reason` |
