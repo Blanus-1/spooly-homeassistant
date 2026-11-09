@@ -29,6 +29,8 @@ def make_spool(n: int, **extra: Any) -> dict[str, Any]:
         "fill_level": None,
         "location": "Regal 1 · Platz 4",
         "location_id": "loc-2",
+        "color_name": "Jade White",
+        "empty_spool_grams": 250,
         "place": 4,
         "archived": False,
     }
