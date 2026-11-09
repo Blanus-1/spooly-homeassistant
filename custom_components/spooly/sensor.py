@@ -67,6 +67,9 @@ class SpoolWeightSensor(SpoolEntity, SensorEntity):
             "finish": spool.get("finish"),
             "color": spool.get("color_hex"),
             "location": spool.get("location"),
+            # eindeutig auch bei gleichnamigen Orten, passt direkt in spooly.move
+            "location_id": spool.get("location_id"),
+            "place": spool.get("place"),
             "spool_size_grams": size,
             "fill_percent": round(remaining / size * 100, 1) if remaining is not None and size else None,
         }

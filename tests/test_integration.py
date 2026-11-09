@@ -70,7 +70,8 @@ async def test_spool_entities(hass: HomeAssistant, aioclient_mock: AiohttpClient
     assert state.attributes["material"] == "PLA"
     assert state.attributes["finish"] == "Matt"
     assert state.attributes["color"] == "#111111"
-    assert state.attributes["location"] == "Regal 1"
+    assert state.attributes["location"] == "Regal 1 · Platz 4"
+    assert (state.attributes["location_id"], state.attributes["place"]) == ("loc-2", 4)
     assert state.attributes["spool_size_grams"] == 1000.0
     assert state.attributes["fill_percent"] == 80.0
     assert state.name.endswith("Restgewicht") or state.name.endswith("Remaining weight")

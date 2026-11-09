@@ -27,7 +27,9 @@ def make_spool(n: int, **extra: Any) -> dict[str, Any]:
         "remaining_grams": 800.0,
         "spool_size_grams": 1000.0,
         "fill_level": None,
-        "location": "Regal 1",
+        "location": "Regal 1 · Platz 4",
+        "location_id": "loc-2",
+        "place": 4,
         "archived": False,
     }
     spool.update(extra)
