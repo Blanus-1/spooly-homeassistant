@@ -173,8 +173,11 @@ class SpoolyClient:
     async def refill(self, spool_id: str, grams: float) -> None:
         await self._request("POST", f"/spools/{quote(spool_id, safe='')}/refill", body={"grams": grams})
 
-    async def move(self, spool_id: str, location_id: str) -> None:
-        await self._request("POST", f"/spools/{quote(spool_id, safe='')}/move", body={"location_id": location_id})
+    async def move(self, spool_id: str, location_id: str, place: int | None = None) -> None:
+        body: dict[str, Any] = {"location_id": location_id}
+        if place:
+            body["place"] = place
+        await self._request("POST", f"/spools/{quote(spool_id, safe='')}/move", body=body)
 
     async def archive(self, spool_id: str) -> None:
         await self._request("POST", f"/spools/{quote(spool_id, safe='')}/archive")

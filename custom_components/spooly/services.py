@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable
 from typing import Any
 
@@ -76,7 +77,12 @@ HTTP_ERRORS = {
     # Spooly meldet eine Spule im laufenden Druck als allgemeinen 409
     "conflict": "spool_in_print",
     "spool_in_print": "spool_in_print",
+    "place_taken": "place_taken",
+    "place_invalid": "place_invalid",
 }
+
+# "Schrank · Fach 1 · Platz 2", so wie Spooly den Ort einer Spule anzeigt
+PLACE_SUFFIX = re.compile(r"^(?P<location>.+?)\s*·\s*platz\s+(?P<place>\d+)$")
 
 
 def _loaded_coordinator(hass: HomeAssistant, entry_id: str) -> SpoolyCoordinator:
@@ -167,18 +173,22 @@ async def _perform(coordinator: SpoolyCoordinator, action: Awaitable[None]) -> N
     await coordinator.async_request_refresh()
 
 
-async def _find_location(coordinator: SpoolyCoordinator, wanted: str) -> str:
-    """Lagerort nach Name (wie in Spooly angezeigt, mit Pfad) oder Kennung."""
+async def _find_location(coordinator: SpoolyCoordinator, wanted: str) -> tuple[str, int | None]:
+    """Lagerort nach Name (wie in Spooly angezeigt, mit Pfad) oder Kennung, dazu ein Platz am Ende."""
     locations = await coordinator.client.get_locations()
     wanted = wanted.strip().casefold()
-    found = [
-        loc for loc in locations if loc["id"].casefold() == wanted or loc["name"].casefold() == wanted
-    ]
+
+    def matching(name: str) -> list[dict[str, Any]]:
+        return [loc for loc in locations if name in (loc["id"].casefold(), loc["name"].casefold())]
+
+    found, place = matching(wanted), None
+    if not found and (m := PLACE_SUFFIX.match(wanted)):
+        found, place = matching(m["location"]), int(m["place"])
     if not found:
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="location_not_found")
     if len(found) > 1:
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="location_ambiguous")
-    return found[0]["id"]
+    return found[0]["id"], place
 
 
 async def _set_weight(call: ServiceCall) -> None:
@@ -198,8 +208,8 @@ async def _move(call: ServiceCall) -> None:
     coordinator, spool_id = _spool_target(call.hass, call.data[ATTR_DEVICE_ID])
 
     async def move() -> None:
-        location_id = await _find_location(coordinator, call.data[ATTR_LOCATION])
-        await coordinator.client.move(spool_id, location_id)
+        location_id, place = await _find_location(coordinator, call.data[ATTR_LOCATION])
+        await coordinator.client.move(spool_id, location_id, place)
 
     await _perform(coordinator, move())
 

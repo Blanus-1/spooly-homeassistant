@@ -206,6 +206,12 @@
     "location_ambiguous": {
       "message": "Mehrere Lagerorte heißen so. Nimm den ganzen Pfad oder die Kennung."
     },
+    "place_taken": {
+      "message": "Auf diesem Platz liegt schon eine andere Spule."
+    },
+    "place_invalid": {
+      "message": "Diesen Platz gibt es in dem Lagerort nicht."
+    },
     "not_a_task": {
       "message": "Wähle den Sensor einer Wartungsaufgabe."
     }
@@ -281,7 +287,7 @@
         },
         "location": {
           "name": "Lagerort",
-          "description": "Name wie in Spooly angezeigt, mit Pfad, oder die Kennung des Lagerorts."
+          "description": "Name wie in Spooly angezeigt, mit Pfad, oder die Kennung des Lagerorts. Ein Platz kommt wie in Spooly dahinter: „Schrank · Fach 1 · Platz 2“."
         }
       }
     },

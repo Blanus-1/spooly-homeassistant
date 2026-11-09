@@ -193,6 +193,21 @@ async def test_move_by_name_or_id(hass: HomeAssistant, aioclient_mock: AiohttpCl
     assert fake.writes == [("POST", "/spools/spool-1/move", {"location_id": "loc-1"})]
 
 
+@pytest.mark.parametrize("wanted", ["Schrank 01 · Fach vorne · Platz 2", "schrank 01 · fach vorne·Platz 2", "loc-1 · Platz 2"])
+async def test_move_to_place(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker, wanted: str) -> None:
+    entry, fake = await setup_entry(hass, aioclient_mock)
+    await call(hass, "move", {"device_id": spool_device(hass, entry), "location": wanted})
+    assert fake.writes == [("POST", "/spools/spool-1/move", {"location_id": "loc-1", "place": 2})]
+
+
+async def test_location_named_like_a_place_wins(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
+    # heißt der Ort selbst so, ist es kein Platz
+    entry, fake = await setup_entry(hass, aioclient_mock)
+    fake.locations.append({"id": "loc-3", "name": "Regal 1 · Platz 3", "is_default": False})
+    await call(hass, "move", {"device_id": spool_device(hass, entry), "location": "Regal 1 · Platz 3"})
+    assert fake.writes == [("POST", "/spools/spool-1/move", {"location_id": "loc-3"})]
+
+
 async def test_move_unknown_location(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
     entry, fake = await setup_entry(hass, aioclient_mock)
     with pytest.raises(ServiceValidationError) as err:
@@ -222,6 +237,8 @@ async def test_move_ambiguous_location(hass: HomeAssistant, aioclient_mock: Aioh
         (409, "andere_farbe", "other_color", None),
         (409, "conflict", "spool_in_print", None),
         (409, "archiviert", "spool_archived", None),
+        (409, "place_taken", "place_taken", None),
+        (422, "place_invalid", "place_invalid", None),
         (422, "above_spool_size", "above_spool_size", None),
         (422, "gross_not_above_tare", "gross_not_above_tare", None),
         (422, "invalid_input", "invalid_input", None),

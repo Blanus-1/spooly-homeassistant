@@ -206,6 +206,12 @@
     "location_ambiguous": {
       "message": "Several storage locations have this name. Use the full path or the id."
     },
+    "place_taken": {
+      "message": "Another spool is already on this place."
+    },
+    "place_invalid": {
+      "message": "This storage location has no place with this number."
+    },
     "not_a_task": {
       "message": "Pick the sensor of a maintenance task."
     }
@@ -281,7 +287,7 @@
         },
         "location": {
           "name": "Storage location",
-          "description": "Name as shown in Spooly, including the path, or the id of the location."
+          "description": "Name as shown in Spooly, including the path, or the id of the location. Add a place like in Spooly: \"Cabinet · Shelf 1 · Platz 2\"."
         }
       }
     },
